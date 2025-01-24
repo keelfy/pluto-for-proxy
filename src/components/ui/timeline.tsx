@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import React from "react";
 
 export type TimelinePointProps = React.PropsWithChildren<{

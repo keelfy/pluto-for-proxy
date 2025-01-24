@@ -3,7 +3,7 @@ import ConfigGenerator from "@/components/config-generator";
 import AppleIcon from "@/components/icons/apple";
 import BufferButton from "@/components/ui/buffer-button";
 import { Timeline, TimelinePoint } from "@/components/ui/timeline";
-import { ArrowRightIcon, CheckIcon, DownloadIcon, FileIcon, KeyIcon, MonitorCogIcon, PlusIcon, PowerIcon, Settings, SettingsIcon } from "lucide-react";
+import { ArrowRightIcon, CheckIcon, DownloadIcon, FileIcon, KeyIcon, MonitorCogIcon, PlusIcon, PowerIcon, SettingsIcon } from "lucide-react";
 import Image from "next/image";
 
 export default function AppleGuidePage() {

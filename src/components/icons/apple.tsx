@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 
 export default function AppleIcon({ className }: { className?: string }) {

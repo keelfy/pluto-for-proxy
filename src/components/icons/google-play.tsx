@@ -1,6 +1,6 @@
 export default function GooglePlayIcon({ className }: { className?: string }) {
     return (
-        <svg width="270" height="80" fill="none" xmlns="http://www.w3.org/2000/svg" className="">
+        <svg width="270" height="80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
             <g clip-path="url(#a)">
                 <mask id="b" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="-21" y="-20" width="311" height="121">
                     <path d="M-20-20h310v120H-20V-20Z" fill="#fff" />

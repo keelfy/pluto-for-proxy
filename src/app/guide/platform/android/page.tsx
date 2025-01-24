@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Timeline, TimelinePoint } from "@/components/ui/timeline";
 import { ArrowRightIcon, CheckIcon, DownloadIcon, FileIcon, KeyIcon, PlusIcon } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 export default function AndroidGuidePage() {
     return (
