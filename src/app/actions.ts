@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 const logConfig = `
 {
     "level": "warn",
@@ -129,7 +131,17 @@ function validateClientUUID(clientUUID: string) {
     return allowedClientUUIDs.includes(clearUUID(clientUUID));
 }
 
+async function getClientIP() {
+    const headersList = await headers();
+    return headersList.get('x-forwarded-for') || 
+           headersList.get('x-real-ip') ||
+           'Unknown IP';
+}
+
 export async function getConfigWithTunnelingByClientUUID(clientUUID: string, includeAntizapret: boolean = true) {
+    const clientIP = await getClientIP();
+    console.log(`[${new Date().toISOString()}] Config generation attempt from IP: ${clientIP} for UUID: ${clientUUID}`);
+
     const sanitizedClientUUID = clearUUID(clientUUID);
     if (!validateClientUUID(sanitizedClientUUID)) {
         throw new Error("Клиент не найден");
@@ -157,6 +169,9 @@ vless://${clientUUID}@${server}:443?type=tcp&security=reality&pbk=${publicKey}&f
 `;
 
 export async function getLinkWithTunnelingByClientUUID(clientUUID: string) {
+    const clientIP = await getClientIP();
+    console.log(`[${new Date().toISOString()}] Link generation attempt from IP: ${clientIP} for UUID: ${clientUUID}`);
+
     const sanitizedClientUUID = clearUUID(clientUUID);
     if (!validateClientUUID(sanitizedClientUUID)) {
         throw new Error("Клиент не найден");
@@ -166,4 +181,22 @@ export async function getLinkWithTunnelingByClientUUID(clientUUID: string) {
     const publicKey = process.env.PROXY_TLS_PUBLIC_KEY!;
     const shortId = process.env.PROXY_TLS_SHORT_ID!;
     return getLinkByClientUUID(server, sanitizedClientUUID, serverName, publicKey, shortId);
+}
+
+export async function pingProxyServer() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(process.env.PROXY_PING_URL!, {
+            method: 'HEAD',
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        return true;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
 }

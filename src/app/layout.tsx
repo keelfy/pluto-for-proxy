@@ -16,6 +16,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="ru" suppressHydrationWarning>
+            <head>
+                <meta name="robots" content="noindex, nofollow" />
+            </head>
             <body className={cn("bg-background text-foreground", GeistSans.className)}>
                 <ThemeProvider
                     attribute="class"

@@ -2,6 +2,7 @@ import AndroidIcon from "@/components/icons/android";
 import AppleIcon from "@/components/icons/apple";
 import GreetingsIcon from "@/components/icons/greetings";
 import WindowsIcon from "@/components/icons/windows";
+import Pinger from "@/components/pinger";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { getDaysAgo } from "@/lib/utils";
@@ -30,7 +31,10 @@ export default function Home() {
                         <GreetingsIcon className="w-8 h-8" />
                         Привет!
                     </div>
-                    <ThemeSwitcher />
+                    <div className="flex items-center gap-2">
+                        <Pinger />
+                        <ThemeSwitcher />
+                    </div>
                 </h1>
                 <h2 className="text-lg font-medium">На какое устройство хочешь установить клиент?</h2>
                 <div className="flex flex-col gap-1 items-start">
