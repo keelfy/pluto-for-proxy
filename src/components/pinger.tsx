@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 
 export default function Pinger() {
     const [isPending, startTransition] = React.useTransition();
-    const [isOnline, setIsOnline] = React.useState<boolean>();
+    const [status, setStatus] = React.useState<string>();
 
     React.useEffect(() => {
         ping();
@@ -18,22 +18,37 @@ export default function Pinger() {
     const ping = async () => startTransition(async () => {
         try {
             const res = await pingProxyServer();
-            setIsOnline(res);
+            setStatus(res);
         } catch (error) {
-            setIsOnline(false);
+            setStatus("error");
         }
     });
+
+    const statusText = React.useMemo(() => {
+        if (isPending) return "Проверка состояния сервера...";
+        if (status === "success") return "Сервер доступен";
+        if (status === "error") return "Ошибка соединения";
+        if (status === "timeout") return "Превышено время ожидания";
+        return "Проверка состояния сервера...";
+    }, [isPending, status]);
+
+    const statusIcon = React.useMemo(() => {
+        if (isPending) return <LoadingSpinner type="short" />;
+        if (status === "success") return <CheckIcon className="w-4 h-4 text-green-500" />;
+        if (["error", "timeout"].includes(status ?? "")) return <XIcon className="w-4 h-4 text-red-500" />;
+        return <LoadingSpinner type="short" />;
+    }, [isPending, status]);
 
     return (
         <TooltipProvider>
             <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size='icon' onClick={() => ping()}>
-                        {isPending ? <LoadingSpinner type="short" /> : isOnline ? <CheckIcon className="w-4 h-4 text-green-500" /> : <XIcon className="w-4 h-4 text-red-500" />}
+                        {statusIcon}
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    {isPending ? "Проверка состояния сервера..." : isOnline ? "Сервер доступен" : "Сервер недоступен"}
+                    {statusText}
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>

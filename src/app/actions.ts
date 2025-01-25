@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import net from "net";
 
 const logConfig = `
 {
@@ -133,9 +134,9 @@ function validateClientUUID(clientUUID: string) {
 
 async function getClientIP() {
     const headersList = await headers();
-    return headersList.get('x-forwarded-for') || 
-           headersList.get('x-real-ip') ||
-           'Unknown IP';
+    return headersList.get('x-forwarded-for') ||
+        headersList.get('x-real-ip') ||
+        'Unknown IP';
 }
 
 export async function getConfigWithTunnelingByClientUUID(clientUUID: string, includeAntizapret: boolean = true) {
@@ -183,20 +184,32 @@ export async function getLinkWithTunnelingByClientUUID(clientUUID: string) {
     return getLinkByClientUUID(server, sanitizedClientUUID, serverName, publicKey, shortId);
 }
 
+function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<string> {
+    return new Promise((resolve) => {
+        const socket = new net.Socket();
+
+        socket.setTimeout(timeout);
+
+        socket
+            .connect(port, host, () => {
+                resolve("success");
+                socket.destroy();
+            })
+            .on('error', () => {
+                resolve("error");
+            })
+            .on('timeout', () => {
+                resolve("timeout");
+                socket.destroy();
+            });
+    });
+}
+
 export async function pingProxyServer() {
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        const response = await fetch(process.env.PROXY_PING_URL!, {
-            method: 'HEAD',
-            signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-        return true;
+        return await pingVLESS(process.env.PROXY_SERVER!, 443);
     } catch (error) {
         console.error(error);
-        return false;
+        return "error";
     }
 }
