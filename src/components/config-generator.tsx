@@ -1,6 +1,6 @@
 "use client";
 
-import { getConfigWithTunnelingByClientUUID, getLinkWithTunnelingByClientUUID } from "@/app/actions";
+import { getConfigByClientUUID, getLinkWithTunnelingByClientUUID } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -62,7 +62,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
 
     const handleFileSubmit = (values: z.infer<typeof formSchema>) => startTransition(async () => {
         try {
-            const config = await getConfigWithTunnelingByClientUUID(values.clientUUID, values.includeAntizapret);
+            const config = await getConfigByClientUUID(values.clientUUID, values.tunneling, values.includeAntizapret);
             const blob = new Blob([config], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -213,9 +213,9 @@ export default function ConfigGenerator({ platform, className }: Props) {
                                     </div>
                                     <FormControl>
                                         <Switch
-                                            checked={form.watch("platform") === "apple" ? true : field.value}
+                                            checked={form.watch("platform") === "apple" ? true : (form.watch('tunneling') ? false : field.value)}
                                             onCheckedChange={field.onChange}
-                                            disabled={form.watch("platform") === "apple"}
+                                            disabled={form.watch("platform") === "apple" || form.watch('tunneling')}
                                         />
                                     </FormControl>
                                 </FormItem>

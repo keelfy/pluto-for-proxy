@@ -115,6 +115,18 @@ const routeConfig = (includeAntizapret: boolean) => `
 }
 `;
 
+const routeAllConfig = `
+{
+    "auto_detect_interface": true,
+    "rules": [
+        {
+            "protocol": ["tcp", "udp"],
+            "outbound": "proxy-out"
+        }
+    ],
+    "final": "proxy-out"
+}
+`;
 const experimentalConfig = `
 {
     "cache_file": {
@@ -139,7 +151,7 @@ async function getClientIP() {
         'Unknown IP';
 }
 
-export async function getConfigWithTunnelingByClientUUID(clientUUID: string, includeAntizapret: boolean = true) {
+export async function getConfigByClientUUID(clientUUID: string, withTunneling: boolean = true, includeAntizapret: boolean = true) {
     const clientIP = await getClientIP();
     console.log(`[${new Date().toISOString()}] Config generation attempt from IP: ${clientIP} for UUID: ${clientUUID}`);
 
@@ -158,7 +170,7 @@ export async function getConfigWithTunnelingByClientUUID(clientUUID: string, inc
         "dns": ${dnsConfig},
         "inbounds": ${inboundsConfig},
         "outbounds": ${outboundsConfig(server, sanitizedClientUUID, serverName, publicKey, shortId)},
-        "route": ${routeConfig(includeAntizapret)},
+        "route": ${withTunneling ? routeAllConfig : routeConfig(includeAntizapret)},
         "experimental": ${experimentalConfig}
     }
     `;
