@@ -170,7 +170,7 @@ export async function getConfigByClientUUID(clientUUID: string, withTunneling: b
         "dns": ${dnsConfig},
         "inbounds": ${inboundsConfig},
         "outbounds": ${outboundsConfig(server, sanitizedClientUUID, serverName, publicKey, shortId)},
-        "route": ${withTunneling ? routeAllConfig : routeConfig(includeAntizapret)},
+        "route": ${withTunneling ? routeConfig(includeAntizapret) : routeAllConfig},
         "experimental": ${experimentalConfig}
     }
     `;

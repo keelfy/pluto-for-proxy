@@ -213,9 +213,9 @@ export default function ConfigGenerator({ platform, className }: Props) {
                                     </div>
                                     <FormControl>
                                         <Switch
-                                            checked={form.watch("platform") === "apple" ? true : (form.watch('tunneling') ? false : field.value)}
+                                            checked={form.watch("platform") === "apple" ? true : (form.watch('tunneling') ? field.value : false)}
                                             onCheckedChange={field.onChange}
-                                            disabled={form.watch("platform") === "apple" || form.watch('tunneling')}
+                                            disabled={form.watch("platform") === "apple" || !form.watch('tunneling')}
                                         />
                                     </FormControl>
                                 </FormItem>
