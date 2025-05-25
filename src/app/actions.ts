@@ -3,6 +3,13 @@
 import { headers } from "next/headers";
 import net from "net";
 
+type Protocol =  "vless" | "shadowsocks";
+
+type Credentials = {
+    id: string;
+    ssocksPassword?: string;
+}
+
 const logConfig = `
 {
     "level": "warn",
@@ -42,8 +49,30 @@ const inboundsConfig = `
 ]
 `;
 
-const getProxyOutboundConfig = (server: string, clientUUID: string, serverName: string, publicKey: string, shortId: string) => (`
-{
+const getProxyOutboundConfig = (server: string, protocol: Protocol, clientUUID: string, serverName: string, publicKey: string, shortId: string) => {
+    switch(protocol) {
+        case "shadowsocks": {
+            const password = getShadowsocksPasswordByClientID(clientUUID);
+            if (password === undefined) {
+                throw new Error("У вас нет доступа к протоколу Shadowsocks");
+            }
+            const ssocksMethod = process.env.PROXY_SHADOWSOCKS_METHOD!;
+            const ssocksPort = process.env.PROXY_SHADOWSOCKS_PORT!;
+            return (`{
+    "tag": "proxy-out",
+    "type": "shadowsocks",
+    "server": "${server}",
+    "server_port": ${ssocksPort},
+    "method": "${ssocksMethod}",
+    "password": "${password}",
+    "udp_over_tcp": {
+        "enabled": true
+    }
+}
+`)
+        }
+        default: {
+            return (`{
     "tag": "proxy-out",
     "type": "vless",
     "server": "${server}",
@@ -64,14 +93,17 @@ const getProxyOutboundConfig = (server: string, clientUUID: string, serverName: 
     }
 }
 `);
+        }
+    }
+};
 
-const outboundsConfig = (server: string, clientUUID: string, serverName: string, publicKey: string, shortId: string) => (`
+const outboundsConfig = (server: string, protocol: Protocol, clientUUID: string, serverName: string, publicKey: string, shortId: string) => (`
 [
     {
         "type": "direct",
         "tag": "direct-out"
     },
-    ${getProxyOutboundConfig(server, clientUUID, serverName, publicKey, shortId)},
+    ${getProxyOutboundConfig(server, protocol, clientUUID, serverName, publicKey, shortId)},
     {
         "type": "dns",
         "tag": "dns-out"
@@ -139,9 +171,27 @@ function clearUUID(uuid: string) {
     return uuid.trim().toUpperCase();
 }
 
-function validateClientUUID(clientUUID: string) {
-    const allowedClientUUIDs = process.env.PROXY_ALLOWED_CLIENT_UUIDS!.split(",").map(clearUUID);
-    return allowedClientUUIDs.includes(clearUUID(clientUUID));
+function getClientCredentialsList(): Credentials[] {
+    const credentialsList: Credentials[] = []
+    process.env.PROXY_ALLOWED_CLIENT_UUIDS!.split(",").forEach(client => {
+        const values = client.split(":");
+        credentialsList.push({
+            id: clearUUID(values[0]),
+            ssocksPassword: values.length > 1 ? values[1] : undefined   
+        });
+    });
+
+    return credentialsList;
+}
+
+function validateClientUUID(clientUUID: string): boolean {
+    const credentials = getClientCredentialsList();
+    return credentials.map(cred => cred.id).includes(clearUUID(clientUUID));
+}
+
+function getShadowsocksPasswordByClientID(clientId: string): string | undefined {
+    const credentials = getClientCredentialsList();
+    return credentials.find(cred => cred.id === clientId)?.ssocksPassword;
 }
 
 async function getClientIP() {
@@ -151,7 +201,12 @@ async function getClientIP() {
         'Unknown IP';
 }
 
-export async function getConfigByClientUUID(clientUUID: string, withTunneling: boolean = true, includeAntizapret: boolean = true) {
+export async function getConfigByClientUUID(
+    protocol: Protocol,
+    clientUUID: string, 
+    withTunneling: boolean = true, 
+    includeAntizapret: boolean = true
+) {
     const clientIP = await getClientIP();
     console.log(`[${new Date().toISOString()}] Config generation attempt from IP: ${clientIP} for UUID: ${clientUUID}`);
 
@@ -169,7 +224,7 @@ export async function getConfigByClientUUID(clientUUID: string, withTunneling: b
         "log": ${logConfig},
         "dns": ${dnsConfig},
         "inbounds": ${inboundsConfig},
-        "outbounds": ${outboundsConfig(server, sanitizedClientUUID, serverName, publicKey, shortId)},
+        "outbounds": ${outboundsConfig(server, protocol, sanitizedClientUUID, serverName, publicKey, shortId)},
         "route": ${withTunneling ? routeConfig(includeAntizapret) : routeAllConfig},
         "experimental": ${experimentalConfig}
     }
@@ -177,11 +232,25 @@ export async function getConfigByClientUUID(clientUUID: string, withTunneling: b
     return JSON.stringify(JSON.parse(config), null, 2);
 }
 
-const getLinkByClientUUID = (server: string, clientUUID: string, serverName: string, publicKey: string, shortId: string) => `
-vless://${clientUUID}@${server}:443?type=tcp&security=reality&pbk=${publicKey}&fp=chrome&sni=${serverName}&sid=${shortId}&spx=%2F&flow=xtls-rprx-vision#jade.keelfy.dev
-`;
+const getLinkByClientUUID = (server: string, protocol: Protocol, clientUUID: string, serverName: string, publicKey: string, shortId: string) => {
+    switch (protocol) {
+        case "shadowsocks": {
+            const password = getShadowsocksPasswordByClientID(clientUUID);
+            if (password === undefined) {
+                throw new Error("У вас нет доступа к протоколу Shadowsocks");
+            }
+            const ssocksMethod = process.env.PROXY_SHADOWSOCKS_METHOD!;
+            const ssocksPort = process.env.PROXY_SHADOWSOCKS_PORT!;
+            const credentials = Buffer.from(`${ssocksMethod}:${password}`, "binary").toString('base64');
+            return `ss://${credentials}@${server}:${ssocksPort}?type=tcp#SSOCKS jade.keelfy.dev`;
+        }
+        default: {
+            return `vless://${clientUUID}@${server}:443?type=tcp&security=reality&pbk=${publicKey}&fp=chrome&sni=${serverName}&sid=${shortId}&spx=%2F&flow=xtls-rprx-vision#VLESS jade.keelfy.dev`
+        }
+    }
+};
 
-export async function getLinkWithTunnelingByClientUUID(clientUUID: string) {
+export async function getLinkWithTunnelingByClientUUID(protocol: Protocol, clientUUID: string) {
     const clientIP = await getClientIP();
     console.log(`[${new Date().toISOString()}] Link generation attempt from IP: ${clientIP} for UUID: ${clientUUID}`);
 
@@ -193,7 +262,7 @@ export async function getLinkWithTunnelingByClientUUID(clientUUID: string) {
     const serverName = process.env.PROXY_TLS_SERVER_NAME!;
     const publicKey = process.env.PROXY_TLS_PUBLIC_KEY!;
     const shortId = process.env.PROXY_TLS_SHORT_ID!;
-    return getLinkByClientUUID(server, sanitizedClientUUID, serverName, publicKey, shortId);
+    return getLinkByClientUUID(server, protocol, sanitizedClientUUID, serverName, publicKey, shortId);
 }
 
 function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<string> {

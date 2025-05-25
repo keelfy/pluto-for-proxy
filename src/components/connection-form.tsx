@@ -45,9 +45,23 @@ const osList = [
     },
 ];
 
+const protocolList = [
+    {
+        value: "vless",
+        label: "VLESS",
+    },
+    {
+        value: "ssocks",
+        label: "Shadowsocks",
+    },
+];
+
 const formSchema = z.object({
     code: z.string().uuid({
         message: "Неверный формат кода",
+    }),
+    protocol: z.enum(["vless", "ssocks"], {
+        message: "Неизвестный протокол",
     }),
     os: z.enum(["windows", "macos", "linux", "ios", "android"], {
         message: "Неизвестная операционная система",
@@ -59,6 +73,7 @@ export default function ConnectionForm() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             code: "",
+            protocol: "vless",
             os: "windows",
         },
     });
@@ -79,6 +94,35 @@ export default function ConnectionForm() {
                                 />
                             </FormControl>
                             <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="protocol"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Протокол подключения</FormLabel>
+                            <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                            >
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Протокол" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {protocolList.map((protocol) => (
+                                        <SelectItem
+                                            key={protocol.value}
+                                            value={protocol.value}
+                                        >
+                                            {protocol.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </FormItem>
                     )}
                 />

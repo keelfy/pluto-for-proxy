@@ -8,7 +8,7 @@ import Image from "next/image";
 
 export default function WindowsGuidePage() {
     return (
-        <div className="flex flex-col gap-4 max-w-xl md:mt-20">
+        <div className="flex flex-col gap-4 max-w-sm md:max-w-xl md:mt-20">
             <h1 className="text-2xl font-bold flex items-center gap-4">
                 <WindowsIcon className="w-8 h-8" />
                 Инструкция для Windows
