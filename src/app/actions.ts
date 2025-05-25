@@ -234,18 +234,18 @@ export async function getConfigByClientUUID(
 
 const getLinkByClientUUID = (server: string, protocol: Protocol, clientUUID: string, serverName: string, publicKey: string, shortId: string) => {
     switch (protocol) {
-        case "shadowsocks": {
+        case 'shadowsocks': {
             const password = getShadowsocksPasswordByClientID(clientUUID);
             if (password === undefined) {
                 throw new Error("У вас нет доступа к протоколу Shadowsocks");
             }
             const ssocksMethod = process.env.PROXY_SHADOWSOCKS_METHOD!;
             const ssocksPort = process.env.PROXY_SHADOWSOCKS_PORT!;
-            const credentials = Buffer.from(`${ssocksMethod}:${password}`, "binary").toString('base64');
-            return `ss://${credentials}@${server}:${ssocksPort}?type=tcp#SSOCKS jade.keelfy.dev`;
+            const credentials = Buffer.from(`${ssocksMethod}:${password}`, 'ascii').toString('base64');
+            return `ss://${credentials}@${server}:${ssocksPort}?type=tcp#SSOCKS%2Bjade`;
         }
         default: {
-            return `vless://${clientUUID}@${server}:443?type=tcp&security=reality&pbk=${publicKey}&fp=chrome&sni=${serverName}&sid=${shortId}&spx=%2F&flow=xtls-rprx-vision#VLESS jade.keelfy.dev`
+            return `vless://${clientUUID}@${server}:443?type=tcp&security=reality&pbk=${publicKey}&fp=chrome&sni=${serverName}&sid=${shortId}&spx=%2F&flow=xtls-rprx-vision#VLESS%2Bjade`
         }
     }
 };
