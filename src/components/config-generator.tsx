@@ -60,7 +60,7 @@ const formSchema = z.object({
 });
 
 type Props = {
-    platform: "windows" | "android" | "apple" | undefined;
+    platform: "windows" | "android" | "apple" | "android-tv" | undefined;
     className?: string;
 };
 

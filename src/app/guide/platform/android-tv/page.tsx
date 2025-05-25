@@ -1,15 +1,14 @@
 import AnyIssues from "@/components/any-issues";
 import ConfigGenerator from "@/components/config-generator";
-import { Button } from "@/components/ui/button";
 import { Timeline, TimelinePoint } from "@/components/ui/timeline";
 import {
-    ArrowRightIcon,
     CheckIcon,
     DownloadIcon,
     FileIcon,
     KeyIcon,
+    NetworkIcon,
     PlusIcon,
-    TvIcon,
+    TvIcon
 } from "lucide-react";
 import Image from "next/image";
 
@@ -23,12 +22,6 @@ export default function AndroidGuidePage() {
 
             <Timeline className="py-6">
                 <TimelinePoint
-                    icon={<KeyIcon className="w-4 h-4" />}
-                    title="Получение доступа"
-                >
-                    <ConfigGenerator platform="android" className="mt-2" />
-                </TimelinePoint>
-                <TimelinePoint
                     icon={<DownloadIcon className="w-4 h-4" />}
                     title="Загрузка"
                     description={
@@ -39,127 +32,191 @@ export default function AndroidGuidePage() {
                         </>
                     }
                 >
-                    <div className="flex gap-4 items-start w-fit">
-                        <a
-                            href="https://play.google.com/store/apps/details?id=com.v2raytun.android"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <img
-                                src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9dFnHwrzVvaBzKGYex4DLql0U2frITZuNOm1b"
-                                alt="Google Play"
-                                className="w-30 h-10"
-                            />
-                        </a>
-                    </div>
-                </TimelinePoint>
-                <TimelinePoint
-                    icon={<ArrowRightIcon className="w-4 h-4" />}
-                    title="Начало"
-                    description={
-                        <>
-                            Откройте установленное приложение и перейдите во
-                            вкладку{" "}
-                            <span className="font-semibold">Profiles</span>.
-                        </>
-                    }
-                >
                     <Image
-                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9icsUf0GPAaBprYbR2xjUlkDqQIJV5gdXZ8SE"
-                        alt="Начало"
-                        width={300}
-                        height={300}
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9ftViH5SQiSmMczvjgr7BFOVd603RCG4NZ1u2"
+                        alt="Приложение"
+                        width={600}
+                        height={600}
                         className="rounded-lg"
                     />
                 </TimelinePoint>
                 <TimelinePoint
-                    icon={<PlusIcon className="w-4 h-4" />}
-                    title="Создание профиля"
+                    icon={<NetworkIcon className="w-4 h-4" />}
+                    title="Браузер"
                     description={
                         <>
-                            Нажмите кнопку добавления профиля справа снизу и
-                            выберите пункт{" "}
+                            Проверьте, есть ли на вашем телевизоре браузер. Если
+                            нет, то установите его из магазина приложений
+                            (называется Browser).
+                        </>
+                    }
+                >
+                    <Image
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9udLxT5Mjnwc4hpe15gANUdRtD0aLZobzW9JG"
+                        alt="Браузер"
+                        width={600}
+                        height={600}
+                        className="rounded-lg"
+                    />
+                </TimelinePoint>
+                <TimelinePoint
+                    icon={<NetworkIcon className="w-4 h-4" />}
+                    title="Сайт для получения доступа"
+                    description={
+                        <>
+                            Откройте браузер и введите в поиск{" "}
                             <span className="font-semibold">
-                                Create Manually
+                                pluto.keelfy.dev
                             </span>
                             .
                         </>
                     }
                 >
                     <Image
-                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9D3iNRloMiTcElUjnvRspuzqQI4XgK3mAFe5d"
-                        alt="Добавление профиля"
-                        width={300}
-                        height={300}
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9mJMk4XSpjZJnsvl6d231w97cBqOPTGi5yRzo"
+                        alt="Браузер"
+                        width={600}
+                        height={600}
+                        className="rounded-lg"
+                    />
+                    <Image
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9eGB0KEt3C7ESbFDHK6yGLnqdtX1ZYNAJwrM8"
+                        alt="Браузер"
+                        width={600}
+                        height={600}
                         className="rounded-lg"
                     />
                 </TimelinePoint>
                 <TimelinePoint
                     icon={<FileIcon className="w-4 h-4" />}
-                    title="Добавление конфигурации"
+                    title="Форма получение доступа"
                     description={
                         <>
-                            У вас появится окно создания профиля.
-                            <br />- В поле{" "}
-                            <span className="font-semibold">Name</span> укажите
-                            любое название.
-                            <br />- В поле{" "}
+                            <span className="underline">
+                                Этот шаг тоже делается с телевизора.
+                            </span>{" "}
+                            Откройте эту инструкцию и долистайте до следующего
+                            шага (
                             <span className="font-semibold">
-                                Type
-                            </span> выберите{" "}
-                            <span className="font-semibold">Local</span>.<br />-
-                            В поле <span className="font-semibold">Source</span>{" "}
-                            должно быть значение{" "}
-                            <span className="font-semibold">Import</span>.<br />
-                            У вас появится кнопка{" "}
-                            <span className="font-semibold">Import File</span> —
-                            найдите на телефоне файл{" "}
-                            <span className="font-semibold">config.json</span>,
-                            полученный в первом шаге.
-                            <br />
-                            Нажмите кнопку{" "}
-                            <span className="font-semibold">Create</span>.
-                        </>
-                    }
-                >
-                    <Image
-                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9SNI0Q3h15hv2NZwcSkPenUjbdKGFX6MaOYsp"
-                        alt="Создание профиля"
-                        width={400}
-                        height={400}
-                        className="rounded-lg mt-2"
-                    />
-                </TimelinePoint>
-                <TimelinePoint
-                    icon={<CheckIcon className="w-4 h-4" />}
-                    title="Проверка"
-                    description={
-                        <>
-                            Перейдите во вкладку{" "}
-                            <span className="font-semibold">Dashboard</span>{" "}
-                            (самая левая), где у вас должен был появиться
-                            профиль, названный вами в предыдущем пункте.
+                                Получение доступа
+                            </span>
+                            ).
                         </>
                     }
                 />
                 <TimelinePoint
-                    icon={<CheckIcon className="w-4 h-4" />}
-                    title="Запуск"
+                    icon={<KeyIcon className="w-4 h-4" />}
+                    title="Получение доступа"
                     description={
-                        <>Справа снизу нажимайте кнопку запуска VPN.</>
+                        <span className="underline">
+                            Этот шаг тоже делается с телевизора.
+                        </span>
+                    }
+                >
+                    <ConfigGenerator platform="android-tv" className="mt-2" />
+                </TimelinePoint>
+                <TimelinePoint
+                    icon={<FileIcon className="w-4 h-4" />}
+                    title="Конфигурация"
+                    description={
+                        <>
+                            <span className="underline">
+                                Этот шаг тоже делается с телевизора.
+                            </span>{" "}
+                            Заполните ваш уникальный идентификатор с телевизора
+                            и нажмите кнопку "Получить конфигурацию".&nbsp; У
+                            вас должно всплыть уведомление об успешном
+                            копировании конфигурации в буфер обмена.&nbsp;
+                        </>
                     }
                 >
                     <Image
-                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT98yiVn3O6QdkcRUXKzYSNi3wu4npO2seET9V1"
-                        alt="Запуск"
-                        width={300}
-                        height={300}
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT93aRk9gWBoculjsvZTqXPAUN8w0RkS9Cf47hO"
+                        alt="Браузер"
+                        width={600}
+                        height={600}
+                        className="rounded-lg"
+                    />
+                </TimelinePoint>
+                <TimelinePoint
+                    icon={<PlusIcon className="w-4 h-4" />}
+                    title="Добавление конфигурации"
+                    description={
+                        <>
+                            Откройте приложение{" "}
+                            <span className="font-semibold">v2rayTun</span>.
+                        </>
+                    }
+                >
+                    <Image
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9FIrQ4NRxIWPGxjdpDgzaThLVAofFcMZOY45w"
+                        alt="Добавление конфигурации"
+                        width={600}
+                        height={600}
+                        className="rounded-lg"
+                    />
+                </TimelinePoint>
+                <TimelinePoint
+                    icon={<PlusIcon className="w-4 h-4" />}
+                    title="Добавление конфигурации. Часть 2"
+                    description={
+                        <>
+                            Нажмите на пункт{" "}
+                            <span className="font-semibold">Control</span>
+                            &nbsp;в главном меню приложения.
+                        </>
+                    }
+                >
+                    <Image
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9Q9gPmAeAkmXR8li1IBZVwavbsfYNtxhJKyGp"
+                        alt="Добавление конфигурации. Часть 2"
+                        width={600}
+                        height={600}
+                        className="rounded-lg"
+                    />
+                </TimelinePoint>
+                <TimelinePoint
+                    icon={<PlusIcon className="w-4 h-4" />}
+                    title="Добавление конфигурации. Часть 3"
+                    description={
+                        <>
+                            Нажмите на пункт{" "}
+                            <span className="font-semibold">
+                                Import config from Clipboard
+                            </span>
+                            &nbsp;в открывшемся окне.
+                        </>
+                    }
+                >
+                    <Image
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9gKOzaGbB1PW37d8zxKVIHTmOcLk6RwUrN0Sl"
+                        alt="Добавление конфигурации. Часть 3"
+                        width={600}
+                        height={600}
+                        className="rounded-lg"
+                    />
+                </TimelinePoint>
+                <TimelinePoint
+                    icon={<CheckIcon className="w-4 h-4" />}
+                    title="Подключение к VPN"
+                    description={
+                        <>
+                            После добавления конфигурации можете подключаться к
+                            VPN нажатием на кнопку посередине главного меню.
+                        </>
+                    }
+                >
+                    <Image
+                        src="https://8bslhl87ch.ufs.sh/f/Gim6IoWu5wT9WQGQiRmXDh1GOCUQ9RjkxevH6wmLSi5TNsfF"
+                        alt="Подключение к VPN"
+                        width={600}
+                        height={600}
                         className="rounded-lg"
                     />
                 </TimelinePoint>
             </Timeline>
 
-            <AnyIssues />
+            <AnyIssues separateTunnelingOption={false} />
         </div>
     );
 }
