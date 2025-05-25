@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
     ArrowLeftRightIcon,
@@ -153,7 +153,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
                     values.protocol,
                     values.clientUUID
                 );
-                await navigator.clipboard.writeText(link);
+                copyToClipboard(link);
                 toast({
                     title: "Ссылка получена",
                     description: "Ссылка скопирована в буфер обмена",

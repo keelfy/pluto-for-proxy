@@ -69,12 +69,12 @@ export default function Home() {
                     >
                         Android
                     </HomeButton>
-                    {/* <HomeButton
+                    <HomeButton
                         href="/guide/platform/android-tv"
                         icon={<AndroidTVIcon className="w-6 h-6" />}
                     >
                         Android TV
-                    </HomeButton> */}
+                    </HomeButton>
                 </div>
                 <div className="flex flex-col gap-2">
                     <div className="text-lg font-medium">
