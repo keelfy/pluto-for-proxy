@@ -1,15 +1,34 @@
 "use client";
 
-import { pingProxyServer } from "@/app/actions";
+import { pingProxyServers } from "@/app/actions";
 import { CheckIcon, XIcon } from "lucide-react";
 import React from "react";
 import { Button } from "./ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { LoadingSpinner } from "./ui/loading-spinner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+
+type PingRes = {
+    serverName: string;
+    status: string;
+    text: string;
+}
+
+const servers = [
+    {
+        name: "Jade",
+        description: "OVHcloud (Варшава, Польша)",
+        value: "jade"
+    },
+    {
+        name: "Emerald",
+        description: "DigitalOcean (Франкфурт, Германия)",
+        value: "emerald"
+    }
+]
 
 export default function Pinger() {
     const [isPending, startTransition] = React.useTransition();
-    const [status, setStatus] = React.useState<string>();
+    const [statusTexts, setStatusTexts] = React.useState<PingRes[]>([]);
 
     React.useEffect(() => {
         ping();
@@ -17,40 +36,62 @@ export default function Pinger() {
 
     const ping = async () => startTransition(async () => {
         try {
-            const res = await pingProxyServer();
-            setStatus(res);
+            const res = await pingProxyServers();
+            setStatusTexts(res.map(result => ({
+                serverName: result.serverName,
+                status: result.status,
+                text: getStatusText(result.status)
+            })));
         } catch (error) {
-            setStatus("error");
+            setStatusTexts([]);
         }
     });
 
-    const statusText = React.useMemo(() => {
-        if (isPending) return "Проверка состояния сервера...";
+    const getStatusText = (status: any) => {
         if (status === "success") return "Сервер доступен";
         if (status === "error") return "Ошибка соединения";
         if (status === "timeout") return "Превышено время ожидания";
         return "Проверка состояния сервера...";
-    }, [isPending, status]);
+    }
 
     const statusIcon = React.useMemo(() => {
         if (isPending) return <LoadingSpinner type="short" />;
-        if (status === "success") return <CheckIcon className="w-4 h-4 text-green-500" />;
-        if (["error", "timeout"].includes(status ?? "")) return <XIcon className="w-4 h-4 text-red-500" />;
+        if (statusTexts.every(status => status.status === "success")) return <CheckIcon className="w-4 h-4 text-green-500" />;
+        if (statusTexts.some(status => ["error", "timeout"].includes(status.status))) return <XIcon className="w-4 h-4 text-red-500" />;
         return <LoadingSpinner type="short" />;
-    }, [isPending, status]);
+    }, [isPending, statusTexts]);
+
+    const getStatusColor = (status: string) => {
+        if (status === "success") return "text-green-500";
+        if (status === "error") return "text-red-500";
+        if (status === "timeout") return "text-yellow-500";
+        return "text-muted-foreground";
+    }
 
     return (
-        <TooltipProvider>
-            <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size='icon' onClick={() => ping()}>
-                        {statusIcon}
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    {statusText}
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+        <HoverCard>
+            <HoverCardTrigger asChild>
+                <Button variant="ghost" size='icon' onClick={() => ping()}>
+                    {statusIcon}
+                </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80">
+                <div className="grid gap-3">
+                    {servers.map(serv => {
+                        const status = statusTexts.find(status => status.serverName === serv.value);
+                        return (
+                            <div key={serv.value} className="grid gap-1">
+                                <p className="text-sm">
+                                    {serv.name} &mdash; <span className={getStatusColor(status?.status ?? "")}>{status?.text ?? "Проверка состояния сервера..."}</span>
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {serv.description}
+                                </p>
+                            </div>
+                        )
+                    })}
+                </div>
+            </HoverCardContent>
+        </HoverCard>
     )
 }

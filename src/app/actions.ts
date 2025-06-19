@@ -268,7 +268,7 @@ export async function getLinkWithTunnelingByClientUUID(serverName: string, proto
     return getLinkByClientUUID(serverName, address, protocol, sanitizedClientUUID, sni, publicKey, shortId);
 }
 
-function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<string> {
+function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<PingResult> {
     return new Promise((resolve) => {
         const socket = new net.Socket();
 
@@ -289,13 +289,34 @@ function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<
     });
 }
 
-export async function pingProxyServer() {
-    try {
-        return await pingVLESS(process.env.PROXY_SERVER!, 443);
-    } catch (error) {
-        console.error(error);
-        return "error";
-    }
+type PingResult = "success" | "error" | "timeout";
+
+type ServerPing = {
+    serverName: string;
+    status: PingResult;
+}
+
+const SERVER_NAMES = [
+    "jade",
+    "emerald"
+]
+
+export async function pingProxyServers() {
+    const results = await Promise.all(SERVER_NAMES.map(async serverName => {
+        try {
+            const result = await pingVLESS(getServerIPByServerName(serverName), 443);
+            return {
+                serverName: serverName,
+                status: result
+            };
+        } catch (error) {
+            return {
+                serverName: serverName,
+                status: "error"
+            }
+        }
+    }));
+    return results;
 }
 
 function getServerIPByServerName(serverName: string) {

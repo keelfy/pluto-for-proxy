@@ -88,13 +88,13 @@ export default function Home() {
                     </HomeButton>
                 </div>
                 <div className="flex flex-col gap-1">
-                    <div className="text-xs text-muted-foreground">
-                        Сервер:{" "}
+                    {/* <div className="text-xs text-muted-foreground">
+                        Сервер:&nbsp;
                         <span className="font-semibold">Варшава, Польша</span> |
                         ODHcloud
-                    </div>
+                    </div> */}
                     <div className="text-xs text-muted-foreground">
-                        Последнее обновление:{" "}
+                        Последнее обновление:&nbsp;
                         <span className="font-semibold">
                             {getDaysAgo(lastUpdate)}
                         </span>
