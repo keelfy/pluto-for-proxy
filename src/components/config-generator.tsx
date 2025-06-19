@@ -375,87 +375,103 @@ export default function ConfigGenerator({ platform, className }: Props) {
                         <FormField
                             control={form.control}
                             name="tunneling"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 gap-4 shadow-sm">
-                                    <div className="space-y-0.5">
-                                        <FormLabel className="flex items-center gap-2">
-                                            <ArrowLeftRightIcon className="w-4 h-4" />
-                                            Раздельное туннелирование
-                                        </FormLabel>
-                                        <FormDescription className="max-w-md">
-                                            <span className="font-bold">
-                                                Рекомендуется оставить
-                                                включенным.
-                                            </span>{" "}
-                                            <br />
-                                            Используйте этот параметр, если у
-                                            вас есть проблемы с подключением со
-                                            включенным туннелированием.
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <Switch
-                                            checked={
-                                                form.watch("platform") ===
-                                                    "apple"
-                                                    ? true
-                                                    : field.value
-                                            }
-                                            onCheckedChange={field.onChange}
-                                            disabled={
-                                                form.watch("platform") ===
-                                                "apple"
-                                            }
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                let isChecked = field.value;
+                                let isDisabled = false;
+                                switch (form.watch("platform")) {
+                                    case "apple":
+                                        isChecked = true;
+                                        isDisabled = true;
+                                        break;
+                                    case "android-tv":
+                                        isChecked = false;
+                                        isDisabled = true;
+                                        break;
+                                }
+
+                                return (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 gap-4 shadow-sm">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="flex items-center gap-2">
+                                                <ArrowLeftRightIcon className="w-4 h-4" />
+                                                Раздельное туннелирование
+                                            </FormLabel>
+                                            <FormDescription className="max-w-md">
+                                                <span className="font-bold">
+                                                    Рекомендуется оставить
+                                                    включенным.
+                                                </span>{" "}
+                                                <br />
+                                                Используйте этот параметр, если у
+                                                вас есть проблемы с подключением со
+                                                включенным туннелированием.
+                                            </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={isChecked}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isDisabled}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )
+                            }}
                         />
 
                         <FormField
                             control={form.control}
                             name="includeAntizapret"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 gap-4 shadow-sm">
-                                    <div className="space-y-0.5">
-                                        <FormLabel className="flex items-center gap-2">
-                                            <ListIcon className="w-4 h-4" />
-                                            Список антизапрета
-                                        </FormLabel>
-                                        <FormDescription className="max-w-md">
-                                            Отключите этот параметр, если у вас
-                                            не работают какие-либо сервисы со
-                                            включенным VPN. Такое пока что было
-                                            замечено только с League of Legends.
-                                            Это сузит список сайтов, которые
-                                            будут доступны в VPN, так что{" "}
-                                            <span className="font-bold">
-                                                рекомендуется оставить
-                                                включенным
-                                            </span>
-                                            .
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <Switch
-                                            checked={
-                                                form.watch("platform") ===
-                                                    "apple"
-                                                    ? true
-                                                    : form.watch("tunneling")
-                                                        ? field.value
-                                                        : false
-                                            }
-                                            onCheckedChange={field.onChange}
-                                            disabled={
-                                                form.watch("platform") ===
-                                                "apple" ||
-                                                !form.watch("tunneling")
-                                            }
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                let isChecked = field.value;
+                                let isDisabled = false;
+                                switch (form.watch("platform")) {
+                                    case "apple":
+                                        isChecked = true;
+                                        isDisabled = true;
+                                        break;
+                                    case "android-tv":
+                                        isChecked = false;
+                                        isDisabled = true;
+                                        break;
+                                }
+
+                                if (!form.watch("tunneling")) {
+                                    isChecked = false;
+                                    isDisabled = true;
+                                }
+
+                                return (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 gap-4 shadow-sm">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="flex items-center gap-2">
+                                                <ListIcon className="w-4 h-4" />
+                                                Список антизапрета
+                                            </FormLabel>
+                                            <FormDescription className="max-w-md">
+                                                Отключите этот параметр, если у вас
+                                                не работают какие-либо сервисы со
+                                                включенным VPN. Такое пока что было
+                                                замечено только с League of Legends.
+                                                Это сузит список сайтов, которые
+                                                будут доступны в VPN, так что{" "}
+                                                <span className="font-bold">
+                                                    рекомендуется оставить
+                                                    включенным
+                                                </span>
+                                                .
+                                            </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={isChecked}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isDisabled}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )
+                            }}
                         />
                     </>
                 )}
