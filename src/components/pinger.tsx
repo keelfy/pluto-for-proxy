@@ -69,7 +69,7 @@ export default function Pinger() {
     }
 
     return (
-        <HoverCard>
+        <HoverCard openDelay={0}>
             <HoverCardTrigger asChild>
                 <Button variant="ghost" size='icon' onClick={() => ping()}>
                     {statusIcon}
