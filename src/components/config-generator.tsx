@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
     ArrowLeftRightIcon,
     ListIcon,
+    PcCaseIcon,
     PowerIcon,
     RefreshCwIcon,
     ShieldCheckIcon,
@@ -44,11 +45,34 @@ import {
 } from "./ui/select";
 import AndroidTVIcon from "./icons/android-tv";
 
+const servers = [
+    {
+        name: "DigitalOcean (Франкфурт, Германия)",
+        value: "emerald",
+    },
+    {
+        name: "OVHcloud (Варшава, Польша)",
+        value: "jade",
+    },
+];
+
+const protocols = [
+    {
+        name: "VLESS",
+        value: "vless",
+    },
+    {
+        name: "Shadowsocks",
+        value: "shadowsocks",
+    },
+]
+
 const formSchema = z.object({
     clientUUID: z
         .string()
         .min(1, { message: "Пожалуйста, введите ваш уникальный идентификатор" })
         .uuid({ message: "Неверный формат UUID" }),
+    server: z.enum(["emerald", "jade"]),
     protocol: z.enum(["vless", "shadowsocks"], {
         required_error: "Пожалуйста, выберите протокол подключения",
     }),
@@ -70,6 +94,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
     const defaultValues = React.useMemo(
         () => ({
             protocol: "vless" as const,
+            server: "emerald" as const,
             platform: platform ?? "windows",
             clientUUID: "",
             tunneling: true,
@@ -104,6 +129,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
         startTransition(async () => {
             try {
                 const config = await getConfigByClientUUID(
+                    values.server,
                     values.protocol,
                     values.clientUUID,
                     values.tunneling,
@@ -113,7 +139,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = "config.json";
+                a.download = `config-${values.server}-${values.protocol}-${values.platform}.json`;
                 a.click();
             } catch (error: any) {
                 console.error(error);
@@ -131,6 +157,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
         startTransition(async () => {
             try {
                 const link = await getLinkWithTunnelingByClientUUID(
+                    values.server,
                     values.protocol,
                     values.clientUUID
                 );
@@ -150,6 +177,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
         startTransition(async () => {
             try {
                 const link = await getLinkWithTunnelingByClientUUID(
+                    values.server,
                     values.protocol,
                     values.clientUUID
                 );
@@ -215,6 +243,40 @@ export default function ConfigGenerator({ platform, className }: Props) {
                 />
                 <FormField
                     control={form.control}
+                    name="server"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                                <PcCaseIcon className="w-4 h-4" />
+                                Сервер
+                            </FormLabel>
+                            <FormDescription>
+                                Выберите сервер. Их тут несколько, чтобы была
+                                возможность пробовать разные для подключения.
+                            </FormDescription>
+                            <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Выберите сервер" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {servers.map((server) => (
+                                        <SelectItem key={server.value} value={server.value}>
+                                            <div className="flex items-center gap-2">
+                                                {server.name}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
                     name="protocol"
                     render={({ field }) => (
                         <FormItem>
@@ -237,18 +299,13 @@ export default function ConfigGenerator({ platform, className }: Props) {
                                     <SelectValue placeholder="Выберите протокол" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="vless">
-                                        <div className="flex items-center gap-2">
-                                            <ShieldCheckIcon className="w-4 h-4" />
-                                            VLESS
-                                        </div>
-                                    </SelectItem>
-                                    <SelectItem value="shadowsocks">
-                                        <div className="flex items-center gap-2">
-                                            <ShieldEllipsisIcon className="w-4 h-4" />
-                                            Shadowsocks
-                                        </div>
-                                    </SelectItem>
+                                    {protocols.map((protocol) => (
+                                        <SelectItem key={protocol.value} value={protocol.value}>
+                                            <div className="flex items-center gap-2">
+                                                {protocol.name}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <FormMessage />
@@ -336,7 +393,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
                                         <Switch
                                             checked={
                                                 form.watch("platform") ===
-                                                "apple"
+                                                    "apple"
                                                     ? true
                                                     : field.value
                                             }
@@ -379,16 +436,16 @@ export default function ConfigGenerator({ platform, className }: Props) {
                                         <Switch
                                             checked={
                                                 form.watch("platform") ===
-                                                "apple"
+                                                    "apple"
                                                     ? true
                                                     : form.watch("tunneling")
-                                                    ? field.value
-                                                    : false
+                                                        ? field.value
+                                                        : false
                                             }
                                             onCheckedChange={field.onChange}
                                             disabled={
                                                 form.watch("platform") ===
-                                                    "apple" ||
+                                                "apple" ||
                                                 !form.watch("tunneling")
                                             }
                                         />

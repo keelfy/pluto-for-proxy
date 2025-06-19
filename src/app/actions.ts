@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import net from "net";
 
-type Protocol =  "vless" | "shadowsocks";
+type Protocol = "vless" | "shadowsocks";
 
 type Credentials = {
     id: string;
@@ -49,19 +49,19 @@ const inboundsConfig = `
 ]
 `;
 
-const getProxyOutboundConfig = (server: string, protocol: Protocol, clientUUID: string, serverName: string, publicKey: string, shortId: string) => {
-    switch(protocol) {
+const getProxyOutboundConfig = (serverName: string, address: string, protocol: Protocol, clientUUID: string, sni: string, publicKey: string, shortId: string) => {
+    switch (protocol) {
         case "shadowsocks": {
             const password = getShadowsocksPasswordByClientID(clientUUID);
             if (password === undefined) {
                 throw new Error("У вас нет доступа к протоколу Shadowsocks");
             }
             const ssocksMethod = process.env.PROXY_SHADOWSOCKS_METHOD!;
-            const ssocksPort = process.env.PROXY_SHADOWSOCKS_PORT!;
+            const ssocksPort = getShadowsocksPortByServerName(serverName);
             return (`{
     "tag": "proxy-out",
     "type": "shadowsocks",
-    "server": "${server}",
+    "server": "${address}",
     "server_port": ${ssocksPort},
     "method": "${ssocksMethod}",
     "password": "${password}",
@@ -75,15 +75,16 @@ const getProxyOutboundConfig = (server: string, protocol: Protocol, clientUUID: 
             return (`{
     "tag": "proxy-out",
     "type": "vless",
-    "server": "${server}",
+    "server": "${address}",
     "server_port": 443,
     "uuid": "${clientUUID}",
     "flow": "xtls-rprx-vision",
     "tls": {
         "enabled": true,
-        "server_name": "${serverName}",
+        "server_name": "${sni}",
         "utls": {
-            "enabled": true
+            "enabled": true,
+            "fingerprint": "chrome"
         },
         "reality": {
             "enabled": true,
@@ -97,13 +98,13 @@ const getProxyOutboundConfig = (server: string, protocol: Protocol, clientUUID: 
     }
 };
 
-const outboundsConfig = (server: string, protocol: Protocol, clientUUID: string, serverName: string, publicKey: string, shortId: string) => (`
+const outboundsConfig = (serverName: string, address: string, protocol: Protocol, clientUUID: string, sni: string, publicKey: string, shortId: string) => (`
 [
     {
         "type": "direct",
         "tag": "direct-out"
     },
-    ${getProxyOutboundConfig(server, protocol, clientUUID, serverName, publicKey, shortId)},
+    ${getProxyOutboundConfig(serverName, address, protocol, clientUUID, sni, publicKey, shortId)},
     {
         "type": "dns",
         "tag": "dns-out"
@@ -177,7 +178,7 @@ function getClientCredentialsList(): Credentials[] {
         const values = client.split(":");
         credentialsList.push({
             id: clearUUID(values[0]),
-            ssocksPassword: values.length > 1 ? values[1] : undefined   
+            ssocksPassword: values.length > 1 ? values[1] : undefined
         });
     });
 
@@ -202,9 +203,10 @@ async function getClientIP() {
 }
 
 export async function getConfigByClientUUID(
+    serverName: string,
     protocol: Protocol,
-    clientUUID: string, 
-    withTunneling: boolean = true, 
+    clientUUID: string,
+    withTunneling: boolean = true,
     includeAntizapret: boolean = true
 ) {
     const clientIP = await getClientIP();
@@ -215,16 +217,16 @@ export async function getConfigByClientUUID(
         throw new Error("Клиент не найден");
     }
 
-    const server = process.env.PROXY_SERVER!;
-    const serverName = process.env.PROXY_TLS_SERVER_NAME!;
-    const publicKey = process.env.PROXY_TLS_PUBLIC_KEY!;
-    const shortId = process.env.PROXY_TLS_SHORT_ID!;
+    const address = getServerIPByServerName(serverName);
+    const sni = getSniByServerName(serverName);
+    const publicKey = getPublicKeyByServerName(serverName);
+    const shortId = getShortIdByServerName(serverName);
     const config = `
     {
         "log": ${logConfig},
         "dns": ${dnsConfig},
         "inbounds": ${inboundsConfig},
-        "outbounds": ${outboundsConfig(server, protocol, sanitizedClientUUID, serverName, publicKey, shortId)},
+        "outbounds": ${outboundsConfig(serverName, address, protocol, sanitizedClientUUID, sni, publicKey, shortId)},
         "route": ${withTunneling ? routeConfig(includeAntizapret) : routeAllConfig},
         "experimental": ${experimentalConfig}
     }
@@ -232,7 +234,7 @@ export async function getConfigByClientUUID(
     return JSON.stringify(JSON.parse(config), null, 2);
 }
 
-const getLinkByClientUUID = (server: string, protocol: Protocol, clientUUID: string, serverName: string, publicKey: string, shortId: string) => {
+const getLinkByClientUUID = (serverName: string, address: string, protocol: Protocol, clientUUID: string, sni: string, publicKey: string, shortId: string) => {
     switch (protocol) {
         case 'shadowsocks': {
             const password = getShadowsocksPasswordByClientID(clientUUID);
@@ -242,15 +244,15 @@ const getLinkByClientUUID = (server: string, protocol: Protocol, clientUUID: str
             const ssocksMethod = process.env.PROXY_SHADOWSOCKS_METHOD!;
             const ssocksPort = process.env.PROXY_SHADOWSOCKS_PORT!;
             const credentials = Buffer.from(`${ssocksMethod}:${password}`, 'ascii').toString('base64');
-            return `ss://${credentials}@${server}:${ssocksPort}?type=tcp#SSOCKS%2Bjade`;
+            return `ss://${credentials}@${address}:${ssocksPort}?type=tcp#SSOCKS%2B${serverName}`;
         }
         default: {
-            return `vless://${clientUUID}@${server}:443?type=tcp&security=reality&pbk=${publicKey}&fp=chrome&sni=${serverName}&sid=${shortId}&spx=%2F&flow=xtls-rprx-vision#VLESS%2Bjade`
+            return `vless://${clientUUID}@${address}:443?type=tcp&security=reality&pbk=${publicKey}&fp=chrome&sni=${sni}&sid=${shortId}&spx=%2F&flow=xtls-rprx-vision#VLESS%2B${serverName}`
         }
     }
 };
 
-export async function getLinkWithTunnelingByClientUUID(protocol: Protocol, clientUUID: string) {
+export async function getLinkWithTunnelingByClientUUID(serverName: string, protocol: Protocol, clientUUID: string) {
     const clientIP = await getClientIP();
     console.log(`[${new Date().toISOString()}] Link generation attempt from IP: ${clientIP} for UUID: ${clientUUID}`);
 
@@ -258,11 +260,12 @@ export async function getLinkWithTunnelingByClientUUID(protocol: Protocol, clien
     if (!validateClientUUID(sanitizedClientUUID)) {
         throw new Error("Клиент не найден");
     }
-    const server = process.env.PROXY_SERVER!;
-    const serverName = process.env.PROXY_TLS_SERVER_NAME!;
-    const publicKey = process.env.PROXY_TLS_PUBLIC_KEY!;
-    const shortId = process.env.PROXY_TLS_SHORT_ID!;
-    return getLinkByClientUUID(server, protocol, sanitizedClientUUID, serverName, publicKey, shortId);
+
+    const address = getServerIPByServerName(serverName);
+    const sni = getSniByServerName(serverName);
+    const publicKey = getPublicKeyByServerName(serverName);
+    const shortId = getShortIdByServerName(serverName);
+    return getLinkByClientUUID(serverName, address, protocol, sanitizedClientUUID, sni, publicKey, shortId);
 }
 
 function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<string> {
@@ -292,5 +295,65 @@ export async function pingProxyServer() {
     } catch (error) {
         console.error(error);
         return "error";
+    }
+}
+
+function getServerIPByServerName(serverName: string) {
+    const servers = process.env.PROXY_SERVERS!.split(";");
+    switch (serverName) {
+        case "jade":
+            return servers[0];
+        case "emerald":
+            return servers[1];
+        default:
+            return servers[0];
+    }
+}
+
+function getSniByServerName(serverName: string) {
+    const snis = process.env.PROXY_TLS_SERVER_NAMES!.split(";");
+    switch (serverName) {
+        case "jade":
+            return snis[0];
+        case "emerald":
+            return snis[1];
+        default:
+            return snis[0];
+    }
+}
+
+function getPublicKeyByServerName(serverName: string) {
+    const publicKeys = process.env.PROXY_TLS_PUBLIC_KEYS!.split(";");
+    switch (serverName) {
+        case "jade":
+            return publicKeys[0];
+        case "emerald":
+            return publicKeys[1];
+        default:
+            return publicKeys[0];
+    }
+}
+
+function getShortIdByServerName(serverName: string) {
+    const shortIds = process.env.PROXY_TLS_SHORT_IDS!.split(";");
+    switch (serverName) {
+        case "jade":
+            return shortIds[0];
+        case "emerald":
+            return shortIds[1];
+        default:
+            return shortIds[0];
+    }
+}
+
+function getShadowsocksPortByServerName(serverName: string) {
+    const shadowsocksPorts = process.env.PROXY_SHADOWSOCKS_PORTS!.split(";");
+    switch (serverName) {
+        case "jade":
+            return shadowsocksPorts[0];
+        case "emerald":
+            return shadowsocksPorts[1];
+        default:
+            return shadowsocksPorts[0];
     }
 }
