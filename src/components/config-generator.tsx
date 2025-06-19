@@ -25,15 +25,14 @@ import {
     PcCaseIcon,
     PowerIcon,
     RefreshCwIcon,
-    ShieldCheckIcon,
-    ShieldEllipsisIcon,
     ShieldIcon,
-    UserIcon,
+    UserIcon
 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import AndroidIcon from "./icons/android";
+import AndroidTVIcon from "./icons/android-tv";
 import AppleIcon from "./icons/apple";
 import WindowsIcon from "./icons/windows";
 import {
@@ -43,15 +42,22 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
-import AndroidTVIcon from "./icons/android-tv";
 
 const servers = [
     {
-        name: "DigitalOcean (Франкфурт, Германия)",
+        name: (
+            <p>
+                <span className="font-bold">EMERALD</span> - DigitalOcean (Франкфурт, Германия)
+            </p>
+        ),
         value: "emerald",
     },
     {
-        name: "OVHcloud (Варшава, Польша)",
+        name: (
+            <p>
+                <span className="font-bold">JADE</span> - OVHcloud (Варшава, Польша)
+            </p>
+        ),
         value: "jade",
     },
 ];
@@ -264,9 +270,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
                                 <SelectContent>
                                     {servers.map((server) => (
                                         <SelectItem key={server.value} value={server.value}>
-                                            <div className="flex items-center gap-2">
-                                                {server.name}
-                                            </div>
+                                            {server.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
