@@ -21,13 +21,12 @@ const dnsConfig = `
 {
     "servers": [
         {
-            "tag": "cloudflare-dns",
-            "address": "https://1.1.1.1/dns-query",
-            "detour": "proxy-out"
+            "tag": "local-dns",
+            "address": "local"
         },
         {
-            "tag": "block-dns",
-            "address": "rcode://name_error"
+            "tag": "quad9-dns",
+            "address": "9.9.9.9"
         }
     ]
 }
@@ -104,11 +103,7 @@ const outboundsConfig = (serverName: string, address: string, protocol: Protocol
         "type": "direct",
         "tag": "direct-out"
     },
-    ${getProxyOutboundConfig(serverName, address, protocol, clientUUID, sni, publicKey, shortId)},
-    {
-        "type": "dns",
-        "tag": "dns-out"
-    }
+    ${getProxyOutboundConfig(serverName, address, protocol, clientUUID, sni, publicKey, shortId)}
 ]
 `);
 
@@ -123,10 +118,6 @@ const routeConfig = (includeAntizapret: boolean) => `
         {
             "rule_set": "keelfy-custom",
             "outbound": "proxy-out"
-        },
-        {
-            "protocol": "dns",
-            "outbound": "dns-out"
         }
     ],
     "rule_set": [
@@ -135,14 +126,14 @@ const routeConfig = (includeAntizapret: boolean) => `
             "type": "remote",
             "format": "binary",
             "url": "https://github.com/savely-krasovsky/antizapret-sing-box/releases/latest/download/antizapret.srs",
-            "download_detour": "proxy-out"
+            "download_detour": "direct-out"
         },` : ""}
         {
             "tag": "keelfy-custom",
             "type": "remote",
             "format": "binary",
             "url": "https://github.com/keelfy/sing-box-cfg/blob/main/sulfur-custom.srs?raw=true",
-            "download_detour": "proxy-out"
+            "download_detour": "direct-out"
         }
     ]
 }
@@ -151,12 +142,6 @@ const routeConfig = (includeAntizapret: boolean) => `
 const routeAllConfig = `
 {
     "auto_detect_interface": true,
-    "rules": [
-        {
-            "protocol": ["tcp", "udp"],
-            "outbound": "proxy-out"
-        }
-    ],
     "final": "proxy-out"
 }
 `;
