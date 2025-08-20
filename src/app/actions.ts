@@ -3,6 +3,20 @@
 import net from "net";
 import { headers } from "next/headers";
 
+type SingBoxConfigContext = {
+    coreMinorVersion: number;
+    coreFixVersion: number;
+    serverName: string;
+    serverAddress: string;
+    protocol: Protocol;
+    clientUUID: string;
+    withTunneling: boolean;
+    includeAntizapret: boolean;
+    sni: string;
+    publicKey: string;
+    shortId: string;
+}
+
 type Protocol = "vless" | "shadowsocks";
 
 type Credentials = {
@@ -10,14 +24,14 @@ type Credentials = {
     ssocksPassword?: string;
 }
 
-const logConfig = `
+const getLogConfig = () => `
 {
     "level": "warn",
     "timestamp": true
 }
 `;
 
-const dnsConfig = `
+const getDnsConfig = () => `
 {
     "servers": [
         {
@@ -28,7 +42,7 @@ const dnsConfig = `
 }
 `;
 
-const inboundsConfig = `
+const getInboundsConfig = () => `
 [
     {
         "type": "tun",
@@ -44,19 +58,19 @@ const inboundsConfig = `
 ]
 `;
 
-const getProxyOutboundConfig = (serverName: string, address: string, protocol: Protocol, clientUUID: string, sni: string, publicKey: string, shortId: string) => {
-    switch (protocol) {
+const getProxyOutboundConfig = (ctx: SingBoxConfigContext): string => {
+    switch (ctx.protocol) {
         case "shadowsocks": {
-            const password = getShadowsocksPasswordByClientID(clientUUID);
+            const password = getShadowsocksPasswordByClientID(ctx.clientUUID);
             if (password === undefined) {
                 throw new Error("У вас нет доступа к протоколу Shadowsocks");
             }
             const ssocksMethod = process.env.PROXY_SHADOWSOCKS_METHOD!;
-            const ssocksPort = getShadowsocksPortByServerName(serverName);
+            const ssocksPort = getShadowsocksPortByServerName(ctx.serverName);
             return (`{
     "tag": "proxy-out",
     "type": "shadowsocks",
-    "server": "${address}",
+    "server": "${ctx.serverAddress}",
     "server_port": ${ssocksPort},
     "method": "${ssocksMethod}",
     "password": "${password}",
@@ -70,21 +84,21 @@ const getProxyOutboundConfig = (serverName: string, address: string, protocol: P
             return (`{
     "tag": "proxy-out",
     "type": "vless",
-    "server": "${address}",
+    "server": "${ctx.serverAddress}",
     "server_port": 443,
-    "uuid": "${clientUUID}",
+    "uuid": "${ctx.clientUUID}",
     "flow": "xtls-rprx-vision",
     "tls": {
         "enabled": true,
-        "server_name": "${sni}",
+        "server_name": "${ctx.sni}",
         "utls": {
             "enabled": true,
             "fingerprint": "chrome"
         },
         "reality": {
             "enabled": true,
-            "public_key": "${publicKey}",
-            "short_id": "${shortId}"
+            "public_key": "${ctx.publicKey}",
+            "short_id": "${ctx.shortId}"
         }
     }
 }
@@ -93,26 +107,26 @@ const getProxyOutboundConfig = (serverName: string, address: string, protocol: P
     }
 };
 
-const outboundsConfig = (serverName: string, address: string, protocol: Protocol, clientUUID: string, sni: string, publicKey: string, shortId: string) => (`
+const getOutboundsConfig = (ctx: SingBoxConfigContext): string => (`
 [
-    {
-        "type": "dns",
-        "tag": "dns-out"
-    },
     {
         "type": "direct",
         "tag": "direct-out"
     },
-    ${getProxyOutboundConfig(serverName, address, protocol, clientUUID, sni, publicKey, shortId)}
+    ${getProxyOutboundConfig(ctx)},
+    {
+        "type": "dns",
+        "tag": "dns-out"
+    }
 ]
 `);
 
-const routeConfig = (includeAntizapret: boolean) => `
+const getRouteConfig = (ctx: SingBoxConfigContext): string => `
 {
     "auto_detect_interface": true,
     "rules": [
         { "port": 853, "outbound": "dns-out" },
-        ${includeAntizapret ? `{
+        ${ctx.includeAntizapret ? `{
             "rule_set": "antizapret",
             "outbound": "proxy-out"
         },` : ""}
@@ -122,7 +136,7 @@ const routeConfig = (includeAntizapret: boolean) => `
         }
     ],
     "rule_set": [
-        ${includeAntizapret ? `{
+        ${ctx.includeAntizapret ? `{
             "tag": "antizapret",
             "type": "remote",
             "format": "binary",
@@ -140,13 +154,13 @@ const routeConfig = (includeAntizapret: boolean) => `
 }
 `;
 
-const routeAllConfig = `
+const getRouteAllConfig = (): string => `
 {
     "auto_detect_interface": true,
     "final": "proxy-out"
 }
 `;
-const experimentalConfig = `
+const getExperimentalConfig = () => `
 {
     "cache_file": {
         "enabled": true
@@ -203,37 +217,46 @@ export async function getConfigByClientUUID(
         throw new Error("Клиент не найден");
     }
 
-    const address = getServerIPByServerName(serverName);
-    const sni = getSniByServerName(serverName);
-    const publicKey = getPublicKeyByServerName(serverName);
-    const shortId = getShortIdByServerName(serverName);
+    const ctx = {
+        coreMinorVersion: 11,
+        coreFixVersion: 0,
+        serverName: serverName,
+        serverAddress: getServerIPByServerName(serverName),
+        protocol: protocol,
+        clientUUID: sanitizedClientUUID,
+        withTunneling: withTunneling,
+        includeAntizapret: includeAntizapret,
+        sni: getSniByServerName(serverName),
+        publicKey: getPublicKeyByServerName(serverName),
+        shortId: getShortIdByServerName(serverName)
+    }
     const config = `
     {
-        "log": ${logConfig},
-        "dns": ${dnsConfig},
-        "inbounds": ${inboundsConfig},
-        "outbounds": ${outboundsConfig(serverName, address, protocol, sanitizedClientUUID, sni, publicKey, shortId)},
-        "route": ${withTunneling ? routeConfig(includeAntizapret) : routeAllConfig},
-        "experimental": ${experimentalConfig}
+        "log": ${getLogConfig()},
+        "dns": ${getDnsConfig()},
+        "inbounds": ${getInboundsConfig()},
+        "outbounds": ${getOutboundsConfig(ctx)},
+        "route": ${withTunneling ? getRouteConfig(ctx) : getRouteAllConfig()},
+        "experimental": ${getExperimentalConfig()}
     }
     `;
     return JSON.stringify(JSON.parse(config), null, 2);
 }
 
-const getLinkByClientUUID = (serverName: string, address: string, protocol: Protocol, clientUUID: string, sni: string, publicKey: string, shortId: string) => {
-    switch (protocol) {
+const getLinkByClientUUID = (ctx: SingBoxConfigContext): string => {
+    switch (ctx.protocol) {
         case 'shadowsocks': {
-            const password = getShadowsocksPasswordByClientID(clientUUID);
+            const password = getShadowsocksPasswordByClientID(ctx.clientUUID);
             if (password === undefined) {
                 throw new Error("У вас нет доступа к протоколу Shadowsocks");
             }
             const ssocksMethod = process.env.PROXY_SHADOWSOCKS_METHOD!;
             const ssocksPort = process.env.PROXY_SHADOWSOCKS_PORT!;
             const credentials = Buffer.from(`${ssocksMethod}:${password}`, 'ascii').toString('base64');
-            return `ss://${credentials}@${address}:${ssocksPort}?type=tcp#SSOCKS%2B${serverName}`;
+            return `ss://${credentials}@${ctx.serverAddress}:${ssocksPort}?type=tcp#SSOCKS%2B${ctx.serverName}`;
         }
         default: {
-            return `vless://${clientUUID}@${address}:443?type=tcp&security=reality&pbk=${publicKey}&fp=chrome&sni=${sni}&sid=${shortId}&spx=%2F&flow=xtls-rprx-vision#VLESS%2B${serverName}`
+            return `vless://${ctx.clientUUID}@${ctx.serverAddress}:443?type=tcp&security=reality&pbk=${ctx.publicKey}&fp=chrome&sni=${ctx.sni}&sid=${ctx.shortId}&spx=%2F&flow=xtls-rprx-vision#VLESS%2B${ctx.serverName}`
         }
     }
 };
@@ -247,11 +270,20 @@ export async function getLinkWithTunnelingByClientUUID(serverName: string, proto
         throw new Error("Клиент не найден");
     }
 
-    const address = getServerIPByServerName(serverName);
-    const sni = getSniByServerName(serverName);
-    const publicKey = getPublicKeyByServerName(serverName);
-    const shortId = getShortIdByServerName(serverName);
-    return getLinkByClientUUID(serverName, address, protocol, sanitizedClientUUID, sni, publicKey, shortId);
+    const ctx: SingBoxConfigContext = {
+        coreMinorVersion: 11,
+        coreFixVersion: 0,
+        serverName: serverName,
+        serverAddress: getServerIPByServerName(serverName),
+        protocol: protocol,
+        clientUUID: sanitizedClientUUID,
+        withTunneling: true,
+        includeAntizapret: false,
+        sni: getSniByServerName(serverName),
+        publicKey: getPublicKeyByServerName(serverName),
+        shortId: getShortIdByServerName(serverName)
+    }
+    return getLinkByClientUUID(ctx);
 }
 
 function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<PingResult> {
