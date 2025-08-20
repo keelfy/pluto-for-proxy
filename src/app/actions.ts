@@ -23,10 +23,6 @@ const dnsConfig = `
         {
             "tag": "local-dns",
             "address": "local"
-        },
-        {
-            "tag": "quad9-dns",
-            "address": "9.9.9.9"
         }
     ]
 }
@@ -100,6 +96,10 @@ const getProxyOutboundConfig = (serverName: string, address: string, protocol: P
 const outboundsConfig = (serverName: string, address: string, protocol: Protocol, clientUUID: string, sni: string, publicKey: string, shortId: string) => (`
 [
     {
+        "type": "dns",
+        "tag": "dns-out"
+    },
+    {
         "type": "direct",
         "tag": "direct-out"
     },
@@ -111,6 +111,7 @@ const routeConfig = (includeAntizapret: boolean) => `
 {
     "auto_detect_interface": true,
     "rules": [
+        { "port": 853, "outbound": "dns-out" },
         ${includeAntizapret ? `{
             "rule_set": "antizapret",
             "outbound": "proxy-out"
