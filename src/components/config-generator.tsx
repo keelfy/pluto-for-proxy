@@ -43,24 +43,16 @@ import {
     SelectValue,
 } from "./ui/select";
 
-const servers = [
-    {
-        name: (
-            <p>
-                <span className="font-bold">EMERALD</span> - DigitalOcean (Франкфурт, Германия)
-            </p>
-        ),
-        value: "emerald",
-    },
-    {
-        name: (
-            <p>
-                <span className="font-bold">JADE</span> - OVHcloud (Варшава, Польша)
-            </p>
-        ),
-        value: "jade",
-    },
-];
+const serverNames = process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";");
+const serverLocations = process.env.NEXT_PUBLIC_SERVER_LOCATIONS!.split(";");
+const servers = serverNames.map((name, index) => ({
+    name: (
+        <p>
+            <span className="font-bold">{name.toUpperCase()}</span> - {serverLocations[index]}
+        </p>
+    ),
+    value: serverNames[index].toLowerCase(),
+}));
 
 const protocols = [
     {
@@ -78,7 +70,7 @@ const formSchema = z.object({
         .string()
         .min(1, { message: "Пожалуйста, введите ваш уникальный идентификатор" })
         .uuid({ message: "Неверный формат UUID" }),
-    server: z.enum(["emerald", "jade"]),
+    server: z.string(),
     protocol: z.enum(["vless", "shadowsocks"], {
         required_error: "Пожалуйста, выберите протокол подключения",
     }),
@@ -100,7 +92,7 @@ export default function ConfigGenerator({ platform, className }: Props) {
     const defaultValues = React.useMemo(
         () => ({
             protocol: "vless" as const,
-            server: "emerald" as const,
+            server: serverNames[0].toLowerCase(),
             platform: platform ?? "windows",
             clientUUID: "",
             tunneling: true,
@@ -147,12 +139,12 @@ export default function ConfigGenerator({ platform, className }: Props) {
                 a.href = url;
                 a.download = `config-${values.server}-${values.protocol}-${values.platform}.json`;
                 a.click();
-            } catch (error: any) {
+            } catch (error) {
                 console.error(error);
                 toast({
                     title: "Возникла ошибка",
                     description:
-                        error.message ??
+                        error instanceof Error ? error.message :
                         "Возникла ошибка при получении конфигурации",
                     variant: "destructive",
                 });
@@ -168,12 +160,13 @@ export default function ConfigGenerator({ platform, className }: Props) {
                     values.clientUUID
                 );
                 window.open(link, "_blank");
-            } catch (error: any) {
+            } catch (error) {
                 console.error(error);
                 toast({
                     title: "Возникла ошибка",
                     description:
-                        error.message ?? "Возникла ошибка при получении ссылки",
+                        error instanceof Error ? error.message :
+                        "Возникла ошибка при получении ссылки",
                     variant: "destructive",
                 });
             }
@@ -192,12 +185,13 @@ export default function ConfigGenerator({ platform, className }: Props) {
                     title: "Ссылка получена",
                     description: "Ссылка скопирована в буфер обмена",
                 });
-            } catch (error: any) {
+            } catch (error) {
                 console.error(error);
                 toast({
                     title: "Возникла ошибка",
                     description:
-                        error.message ?? "Возникла ошибка при получении ссылки",
+                        error instanceof Error ? error.message :
+                        "Возникла ошибка при получении ссылки",
                     variant: "destructive",
                 });
             }

@@ -1,7 +1,7 @@
 "use server";
 
-import { headers } from "next/headers";
 import net from "net";
+import { headers } from "next/headers";
 
 type Protocol = "vless" | "shadowsocks";
 
@@ -291,18 +291,10 @@ function pingVLESS(host: string, port: number, timeout: number = 5000): Promise<
 
 type PingResult = "success" | "error" | "timeout";
 
-type ServerPing = {
-    serverName: string;
-    status: PingResult;
-}
-
-const SERVER_NAMES = [
-    "jade",
-    "emerald"
-]
-
 export async function pingProxyServers() {
-    const results = await Promise.all(SERVER_NAMES.map(async serverName => {
+    const results = await Promise.all(process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";")
+    .map(name => name.toLowerCase())
+    .map(async serverName => {
         try {
             const result = await pingVLESS(getServerIPByServerName(serverName), 443);
             return {
@@ -310,6 +302,7 @@ export async function pingProxyServers() {
                 status: result
             };
         } catch (error) {
+            console.error(`[${new Date().toISOString()}] Error pinging server ${serverName}: ${error}`);
             return {
                 serverName: serverName,
                 status: "error"
@@ -320,61 +313,71 @@ export async function pingProxyServers() {
 }
 
 function getServerIPByServerName(serverName: string) {
+    let id = 0;
     const servers = process.env.PROXY_SERVERS!.split(";");
-    switch (serverName) {
-        case "jade":
-            return servers[0];
-        case "emerald":
-            return servers[1];
-        default:
-            return servers[0];
+    const serverNames = process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";").map(name => name.toLowerCase());
+
+    for (const name of serverNames) {
+        if (name === serverName.toLowerCase()) {
+            return servers[id];
+        }
+        id++;
     }
+    return servers[0];
 }
 
 function getSniByServerName(serverName: string) {
     const snis = process.env.PROXY_TLS_SERVER_NAMES!.split(";");
-    switch (serverName) {
-        case "jade":
-            return snis[0];
-        case "emerald":
-            return snis[1];
-        default:
-            return snis[0];
+    let id = 0;
+    const serverNames = process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";").map(name => name.toLowerCase());
+
+    for (const name of serverNames) {
+        if (name === serverName.toLowerCase()) {
+            return snis[id];
+        }
+        id++;
     }
+    return snis[0];
 }
 
 function getPublicKeyByServerName(serverName: string) {
     const publicKeys = process.env.PROXY_TLS_PUBLIC_KEYS!.split(";");
-    switch (serverName) {
-        case "jade":
-            return publicKeys[0];
-        case "emerald":
-            return publicKeys[1];
-        default:
-            return publicKeys[0];
+    let id = 0;
+    const serverNames = process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";").map(name => name.toLowerCase());
+
+    for (const name of serverNames) {
+        if (name === serverName.toLowerCase()) {
+            return publicKeys[id];
+        }
+        id++;
     }
+    return publicKeys[0];
 }
 
 function getShortIdByServerName(serverName: string) {
     const shortIds = process.env.PROXY_TLS_SHORT_IDS!.split(";");
-    switch (serverName) {
-        case "jade":
-            return shortIds[0];
-        case "emerald":
-            return shortIds[1];
-        default:
-            return shortIds[0];
+    let id = 0;
+    const serverNames = process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";").map(name => name.toLowerCase());
+
+    for (const name of serverNames) {
+        if (name === serverName.toLowerCase()) {
+            return shortIds[id];
+        }
+        id++;
     }
+    return shortIds[0];
 }
 
 function getShadowsocksPortByServerName(serverName: string) {
     const shadowsocksPorts = process.env.PROXY_SHADOWSOCKS_PORTS!.split(";");
-    switch (serverName) {
-        case "jade":
-            return shadowsocksPorts[0];
-        case "emerald":
-            return shadowsocksPorts[1];
-        default:
-            return shadowsocksPorts[0];
+    let id = 0;
+    const serverNames = process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";").map(name => name.toLowerCase());
+
+    for (const name of serverNames) {
+        if (name === serverName.toLowerCase()) {
+            return shadowsocksPorts[id];
+        }
+        id++;
     }
+    return shadowsocksPorts[0];
 }

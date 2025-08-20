@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "pluto for jade",
+    title: 'pluto',
 };
 
 export default function RootLayout({

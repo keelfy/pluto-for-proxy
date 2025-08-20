@@ -13,18 +13,13 @@ type PingRes = {
     text: string;
 }
 
-const servers = [
-    {
-        name: "Jade",
-        description: "OVHcloud (Варшава, Польша)",
-        value: "jade"
-    },
-    {
-        name: "Emerald",
-        description: "DigitalOcean (Франкфурт, Германия)",
-        value: "emerald"
-    }
-]
+const serverNames = process.env.NEXT_PUBLIC_SERVER_NAMES!.split(";");
+const serverLocations = process.env.NEXT_PUBLIC_SERVER_LOCATIONS!.split(";");
+const servers = serverNames.map((name, index) => ({
+    name: name,
+    description: serverLocations[index],
+    value: serverNames[index].toLowerCase(),
+}));
 
 export default function Pinger() {
     const [isPending, startTransition] = React.useTransition();
